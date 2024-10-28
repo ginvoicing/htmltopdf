@@ -43,43 +43,6 @@ class Command
      */
     public bool $escapeCommand = false;
 
-    /**
-     * @var bool whether to use `exec()` instead of `proc_open()`. This can be
-     * used on Windows system to workaround some quirks there. Note, that any
-     * errors from your command will be output directly to the PHP output
-     * stream. `getStdErr()` will also not work anymore and thus you also won't
-     * get the error output from `getError()` in this case. You also can't pass
-     * any environment variables to the command if this is enabled. Default is
-     * `false`.
-     */
-    public bool $useExec = false;
-
-    /**
-     * @var string|null the initial working dir for `proc_open()`. Default is
-     * `null` for current PHP working dir.
-     */
-    public string|null $procCwd = null;
-
-    /**
-     * @var array|null an array with environment variables to pass to
-     * `proc_open()`. Default is `null` for none.
-     */
-    public array|null $procEnv = null;
-
-    /**
-     * @var array|null an array of other_options for `proc_open()`. Default is
-     * `null` for none.
-     */
-    public array|null $procOptions = null;
-
-    /**
-     * @var bool|null whether to set the stdin/stdout/stderr streams to
-     * non-blocking mode when `proc_open()` is used. This allows to have huge
-     * inputs/outputs without making the process hang. The default is `null`
-     * which will enable the feature on Non-Windows systems. Set it to `true`
-     * or `false` to manually enable/disable it. It does not work on Windows.
-     */
-    public bool|null $nonBlockingMode = null;
 
     /**
      * @var int the time in seconds after which a command should be terminated.
@@ -134,7 +97,7 @@ class Command
      */
     protected bool $_executed = false;
 
-    protected string $htmlURL;
+    protected string|null $htmlURL = null;
 
     public string $outputFile;
 
@@ -387,9 +350,12 @@ class Command
             unset($args['input']);
         }
         if (isset($args['inputArg'])) {
-            $this->htmlURL = $args['inputArg'];
-            // Typecasts TmpFile to filename and escapes argument
-//            $this->addArg((string) $args['inputArg'], null, true);
+            if (filter_var($args['inputArg'], FILTER_VALIDATE_URL)) {
+                $this->htmlURL = $args['inputArg'];
+            } else {
+                // Typecasts TmpFile to filename and escapes argument
+                $this->addArg((string)$args['inputArg'], null, true);
+            }
             unset($args['inputArg']);
         }
         foreach ($args as $key => $val) {
@@ -417,16 +383,24 @@ class Command
      */
     public function execute(): bool
     {
-        $response = HttpClient::create()->request('POST', $this->_command, [
-            'json' => ['url' => $this->htmlURL, 'options' => implode(' ', $this->getArgs())],
-        ]);
 
-        if($response->getStatusCode() !== 200) {
+        if ($this->htmlURL !== null && filter_var($this->htmlURL, FILTER_VALIDATE_URL)) {
+            $response = HttpClient::create()->request('POST', $this->_command . '/pdf-from-url', [
+                'json' => ['url' => $this->htmlURL, 'options' => implode(' ', $this->getArgs())],
+            ]);
+        } else {
+            $response = HttpClient::create()->request('POST', $this->_command . '/pdf-from-html', [
+                'json' => ['html_content' => $this->htmlURL, 'options' => implode(' ', $this->getArgs())],
+            ]);
+        }
+
+
+        if ($response->getStatusCode() !== 200) {
             // log some error.
             return false;
         }
 
-         file_put_contents($this->outputFile,$response->getContent());
+        file_put_contents($this->outputFile, $response->getContent());
 
         $this->_executed = true;
 
