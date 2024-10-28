@@ -4,6 +4,7 @@
     "keywords": ["pdf", "htmltopdf", "wkhtmltoimage" ],
     "homepage": "http://ginvoicing.github.com/htmltopdf/",
     "type": "library",
+    "version": "1.0.0",
     "license": "MIT",
     "authors": [
         {
