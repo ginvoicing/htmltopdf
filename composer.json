@@ -1,0 +1,27 @@
+{
+    "name": "ginvoicing/htmltopdf",
+    "description": "PHP wrapper around htmlToPdf service which can create pdf from html and images",
+    "keywords": ["pdf", "htmltopdf", "wkhtmltoimage" ],
+    "homepage": "http://ginvoicing.github.com/htmltopdf/",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tarun Jangra",
+            "email": "tarun.jangra@hotmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1.0",
+        "ext-fileinfo": "*",
+        "symfony/http-client": ">=7.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "ginvoicing\\": "src"
+        }
+    },
+    "require-dev": {
+        "psy/psysh": "^0.12.4"
+    }
+}
